@@ -50,5 +50,5 @@ The palette is rooted in high-contrast neutrals and a single accent color.
 
 ## Typography
 
-Public Sans carries body and headline weight; Space Grotesk handles uppercase
+Noto Sans KR carries body and headline weight; Space Grotesk handles uppercase
 labels and metadata where character distinction matters.
