@@ -1,117 +1,212 @@
-# DESIGN.md → Figma Variables Bridge
+# DESIGN.md → Figma Variables Bridge (v2: 멀티 브랜드 + 프로모션)
 
-DESIGN.md를 단일 소스로 두고, **Figma Professional 플랜에서도 동작하는** Plugin API 우회 경로로 Figma Variables를 동기화하는 도구 모음입니다.
+여러 DESIGN.md를 **`_base` 공통 토큰 + 브랜드 오버라이드 + 프로모션 오버라이드** 방식으로 관리하고, 각각을 Figma의 독립 컬렉션으로 동기화합니다.
 
 ```
-DESIGN.md  →  CI (GitHub Actions)  →  figma-payload.json  →  Figma Plugin  →  Variables
-   │                  │                       │                     │
- SSoT             lint + export         raw.githubusercontent     디자이너가
-                + convert               에 자동 커밋               Import 버튼
+brands/_base/DESIGN.md          ─┐
+                                  │ deep merge
+brands/heritage/DESIGN.md       ─┘─┐
+                                    │ deep merge (3-level)
+promotions/2026-spring/DESIGN.md ──┘
+        │
+        │ CI: lint → DTCG export → 평탄화
+        ▼
+payloads/2026-spring.json + manifest.json (raw URL 노출)
+        │
+        │ Figma Plugin: manifest fetch → 체크박스 다중 선택 → 일괄 import
+        ▼
+Figma Variables: Heritage / Modern / 2026-spring / 2026-summer 컬렉션 (독립)
 ```
 
 ## 디렉터리 구조
 
 ```
 .
-├── DESIGN.md                      # 단일 소스 (편집 대상)
-├── tokens.json                    # CI가 생성 (DTCG)
-├── figma-payload.json             # CI가 생성 (Figma용 평탄화 페이로드)
-├── package.json
+├── brands/
+│   ├── _base/DESIGN.md         # 공통 spacing, rounded, base typography
+│   ├── heritage/DESIGN.md      # extends: brands/_base
+│   └── modern/DESIGN.md        # extends: brands/_base
+├── promotions/
+│   ├── 2026-spring/DESIGN.md   # extends: brands/heritage
+│   ├── 2026-summer/DESIGN.md   # extends: brands/modern
+│   └── _archive/               # 종료된 캠페인 (CI 스킵)
+├── payloads/                   # CI 자동 생성 — 손대지 마세요
+│   ├── heritage.json
+│   ├── modern.json
+│   ├── 2026-spring.json
+│   ├── 2026-summer.json
+│   └── manifest.json           # 플러그인이 읽는 인덱스
 ├── scripts/
-│   └── dtcg-to-figma.mjs          # DTCG → Figma 페이로드 변환기
-├── figma-plugin/                  # Figma 임포트 플러그인
-│   ├── manifest.json
-│   ├── code.ts                    # 메인 로직 (TypeScript)
-│   ├── ui.html                    # 플러그인 UI
-│   ├── tsconfig.json
-│   └── package.json
-└── .github/workflows/
-    └── publish-tokens.yml         # CI
+│   ├── merge.mjs               # extends 체인 머지
+│   └── dtcg-to-figma.mjs       # DTCG → Figma payload 평탄화
+├── figma-plugin/               # 디자이너 PC에서 빌드 후 사용
+└── .github/workflows/publish-tokens.yml
 ```
+
+## 상속 규칙: `extends`
+
+각 DESIGN.md 머리에 `extends`를 적으면, CI가 그 부모를 찾아 deep merge한 결과를 lint·export 합니다.
+
+```yaml
+---
+extends: brands/heritage    # 저장소 루트 기준 경로 (DESIGN.md 자동 추가)
+name: 2026 Spring
+expires: 2026-06-30         # 메타데이터 (운영용, 토큰엔 영향 없음)
+colors:
+  accent: "#88B04B"         # Heritage에 없던 새 토큰 — 추가됨
+  primary: "#0F172A"        # Heritage의 primary를 덮어씀
+---
+```
+
+머지 동작:
+- **객체는 깊게(deep) 머지** — `colors` 안에서 `primary`만 바꾸면 다른 색은 부모 그대로
+- **배열·원시값은 자식이 통째로 대체**
+- **사이클 검출** — `A→B→A` 같은 순환 참조는 빌드 실패
+- **`extends` 없으면 단독 파일로 처리**
+- **`extends`, `expires` 같은 메타 필드는 export 시 제거**
 
 ## 셋업 (1회)
 
-### 1. 저장소 준비
+### 1. 저장소 push
 
-이 폴더 전체를 새 GitHub 저장소에 푸시합니다. `main` 브랜치에 `DESIGN.md`가 들어 있어야 합니다.
+이 폴더 전체를 GitHub 저장소(public 권장)에 push합니다. push 직후 `Publish Figma Tokens` 워크플로우가 4개 컬렉션을 자동 빌드하고 `payloads/`를 commit합니다.
 
-### 2. CI 동작 확인
+### 2. Workflow 권한
 
-`DESIGN.md`를 편집해 푸시하면 워크플로우(`Publish Figma Tokens`)가 돌면서 같은 브랜치에 `tokens.json`과 `figma-payload.json`을 자동 커밋합니다.
+저장소 → **Settings → Actions → General → Workflow permissions** → **Read and write permissions** → Save.
 
-플러그인이 실제로 fetch할 URL은 다음과 같은 형태입니다.
+### 3. Manifest URL 확인
+
+CI 완료 후 다음 URL이 살아있는지 브라우저로 확인:
 
 ```
-https://raw.githubusercontent.com/<OWNER>/<REPO>/main/figma-payload.json
+https://raw.githubusercontent.com/<owner>/<repo>/<branch>/payloads/manifest.json
 ```
 
-비공개 저장소면 raw URL이 인증을 요구하므로, **저장소를 public으로 두거나** GitHub Pages로 별도 배포(또는 Releases 첨부)하는 식으로 풀어주세요. 가장 단순한 길은 토큰 저장소만 public으로 두는 것입니다.
+JSON이 보이면 OK. 디자이너에게 이 URL을 공유합니다.
 
-### 3. Figma 플러그인 빌드
+### 4. Figma 플러그인 빌드 & 등록 (디자이너 PC에서)
 
 ```bash
 cd figma-plugin
 npm install
-npm run build       # code.ts → code.js 컴파일
+npm run build
 ```
 
-빌드 결과로 `figma-plugin/code.js`가 생성됩니다.
+Figma 데스크톱 앱 (브라우저 ❌) → **Plugins → Development → Import plugin from manifest…** → `figma-plugin/manifest.json`.
 
-### 4. Figma에 플러그인 등록 (개발 모드)
+### 5. 첫 사용
 
-1. Figma 데스크톱 앱을 엽니다 (브라우저 버전은 로컬 플러그인 등록 불가)
-2. 메뉴 → **Plugins → Development → Import plugin from manifest…**
-3. `figma-plugin/manifest.json` 선택
-4. 임의의 Figma 파일에서 **Plugins → Development → DESIGN.md Importer** 실행
+플러그인 실행 → "Manifest URL" 펼침 → 위 URL 붙여넣기 → **Load manifest**. 컬렉션 4개가 목록에 나타납니다. 원하는 것을 체크하고 **Import** 클릭.
 
-팀 전체에 배포하려면 [Figma 조직용 사설 플러그인 publish](https://help.figma.com/hc/en-us/articles/4404228629655) 절차를 따릅니다(Organization 플랜 필요). Professional 플랜에서는 멤버 각자가 manifest를 import 하는 방식으로 사용합니다.
+## 일상 운영
 
-## 운영 흐름 (반복)
+### DESIGN.md 편집 흐름
 
-1. 디자이너가 `DESIGN.md`를 편집해 PR 생성
-2. PR 머지 → GitHub Actions가 `figma-payload.json` 갱신 후 커밋
-3. 디자이너가 Figma에서 플러그인을 열고 **Import** 클릭 → Variables 갱신
-4. Figma UI에서 **Publish library**를 1회 눌러 다른 파일로 전파
+1. `brands/heritage/DESIGN.md` 또는 `promotions/2026-spring/DESIGN.md` 편집
+2. PR 생성 → 머지
+3. 30초 후 `payloads/`가 자동 갱신됨
+4. 디자이너가 Figma에서 플러그인 → Import (URL 다시 입력 불필요, 저장됨)
 
-## 변환기가 처리해 주는 것
+### 새 브랜드 추가
 
-| DESIGN.md 토큰 | Figma Variable |
+```bash
+mkdir brands/newbrand
+cat > brands/newbrand/DESIGN.md << 'EOF'
+---
+extends: brands/_base
+name: NewBrand
+colors:
+  primary: "#000000"
+  ...
+---
+## Overview
+...
+EOF
+git add brands/newbrand && git commit -m "feat: add NewBrand" && git push
+```
+
+CI가 자동으로 `newbrand`를 발견·빌드합니다. 워크플로우 yml 수정 불필요.
+
+### 새 프로모션 추가
+
+`promotions/YYYY-name/DESIGN.md`로 만들고 `extends:`에 어느 브랜드를 베이스로 할지 적습니다.
+
+### 프로모션 종료
+
+```bash
+git mv promotions/2026-spring promotions/_archive/2026-spring
+git commit -m "chore: archive 2026 Spring promo (expired)" && git push
+```
+
+`_archive/` 폴더는 CI에서 스킵되므로 manifest와 payload에서 사라집니다. **Figma의 컬렉션은 자동 삭제되지 않으므로**, 사용처 확인 후 디자이너가 Figma UI에서 수동 삭제합니다.
+
+## v1에서 v2로 마이그레이션
+
+기존 v1 저장소를 그대로 쓰고 있다면:
+
+1. **백업**: 현재 `DESIGN.md`를 어딘가에 복사
+2. **폴더 만들기**:
+   ```bash
+   mkdir -p brands/_base brands/<your-brand-name> promotions
+   ```
+3. **DESIGN.md 분할**:
+   - 공통 토큰(spacing, rounded, base typography)을 `brands/_base/DESIGN.md`로
+   - 브랜드별 토큰(colors, h1 등)을 `brands/<your-brand-name>/DESIGN.md`로
+   - 후자에 `extends: brands/_base` 추가
+4. **변환기와 워크플로우 교체**:
+   - `scripts/dtcg-to-figma.mjs`는 v1과 동일 (그대로 유지 가능)
+   - `scripts/merge.mjs`는 새로 추가
+   - `.github/workflows/publish-tokens.yml`은 v2 버전으로 교체
+5. **루트 `DESIGN.md` 삭제** (`brands/`로 이동했으므로)
+6. **`package.json`에 `js-yaml` 의존성 추가** (또는 v2 package.json 사용)
+7. **플러그인 v2로 교체** & 디자이너 재import
+8. **첫 푸시 후 Figma 컬렉션 변경**:
+   - 기존 `Brand` 컬렉션 → 사용처 그대로 두고
+   - 새로 생긴 `<your-brand-name>` 컬렉션으로 단계적 마이그레이션
+   - 모든 컴포넌트가 새 컬렉션을 참조하면 `Brand` 컬렉션 수동 삭제
+
+## 변환기가 처리하는 것 (v1과 동일)
+
+| DESIGN.md | Figma Variable |
 |---|---|
-| `colors.primary: "#0B71B9"` | `colors/primary` (COLOR) |
-| `rounded.sm: 4px` | `rounded/sm` (FLOAT, 4) |
-| `spacing.md: 16px` | `spacing/md` (FLOAT, 16) |
-| `typography.h1.fontFamily` | `typography/h1/fontFamily` (STRING) |
-| `typography.h1.fontSize: 3rem` | `typography/h1/fontSize` (FLOAT, 48) |
-| `typography.h1.fontWeight: 700` | `typography/h1/fontWeight` (FLOAT, 700) |
-| `components.button-primary.backgroundColor: "{colors.tertiary}"` | `components/button-primary/backgroundColor` (COLOR alias → `colors/tertiary`) |
-
-핵심:
-- **Typography composite는 Figma가 단일 변수로 표현 못 하므로 5개로 분해**합니다 (fontFamily, fontSize, fontWeight, lineHeight, letterSpacing). 이 분해된 변수들을 Figma의 Text Style에 일일이 바인딩하시면 됩니다.
-- **`components` 섹션은 슬래시 그룹으로 평탄화**됩니다. Figma Variables 패널에서 `components/button-primary/` 폴더로 깔끔하게 묶입니다.
-- **`{...}` 참조는 Figma의 Variable Alias로 변환**되어, `colors.tertiary`를 바꾸면 모든 사용처에 전파됩니다.
-- `rem`/`em`은 16px 기준으로 px 환산됩니다.
-
-## 멱등성과 안전성
-
-- **재실행 안전**: 같은 페이로드를 여러 번 import 해도 중복 변수가 생기지 않습니다. 이름으로 매칭해 값만 갱신합니다.
-- **삭제는 자동화하지 않음**: DESIGN.md에서 토큰을 제거해도 Figma의 기존 변수는 자동 삭제되지 않습니다. 수동으로 정리하세요(고의적 안전 장치 — 디자인 자산 손실 방지).
-- **타입 변경 차단**: 같은 이름의 변수가 다른 타입으로 존재하면 스킵하고 경고를 출력합니다(Figma는 변수 타입을 사후 변경 불가). 이름을 바꾸거나 Figma에서 해당 변수를 삭제 후 재실행하세요.
-
-## 확장 포인트
-
-- **다크 모드**: `code.ts`의 `modeId` 부분을 다중 mode 처리로 확장하고, DESIGN.md를 두 개 운영하거나 변환기에서 modes를 분리하세요.
-- **다중 Collection**: 페이로드 스키마에 `collections: [...]` 배열을 추가하면 Brand/Semantic 등 분리 가능.
-- **자동 Publish**: REST API의 publish 엔드포인트는 Enterprise 전용이라 Professional에서는 디자이너 클릭이 1회 필요합니다.
+| `colors.primary: "#1A1C1E"` | `color/primary` (COLOR) |
+| `rounded.sm: 4px` | `rounded/sm` (FLOAT) |
+| `typography.h1` (composite) | `typography/h1/fontFamily`, `…/fontSize`, `…/fontWeight`, `…/lineHeight`, `…/letterSpacing` (5개로 분해) |
+| `"{colors.tertiary}"` 참조 | Variable Alias (Figma 내부 참조) |
 
 ## 트러블슈팅
 
-| 증상 | 원인 / 해결 |
+| 증상 | 해결 |
 |---|---|
-| `HTTP 404` | raw URL 오타이거나 저장소가 private. URL 끝이 `figma-payload.json`인지, branch 이름이 `main`인지 확인. |
-| `Network access denied` | `manifest.json`의 `allowedDomains`에 fetch 대상 도메인을 추가. 기본값은 `raw.githubusercontent.com`만 허용. |
-| `Skipped: type mismatch` | 같은 이름의 Variable이 이미 다른 타입으로 존재. Figma에서 수동 삭제 후 재실행. |
-| 색이 어둡게 보임 | hex가 sRGB로 정상이지만 디스플레이 P3 환경이면 약간 다르게 보일 수 있음(Figma는 sRGB 기준). |
+| CI에서 `Cannot resolve "extends: ..."` | extends 경로가 저장소 루트 기준인지, 해당 폴더에 DESIGN.md가 있는지 확인 |
+| CI에서 `Inheritance cycle detected` | 부모-자식이 서로 참조함. 한쪽 extends 제거 |
+| 플러그인 `HTTP 404` | manifest URL 오타 또는 저장소 private. URL 끝이 `manifest.json`인지 확인 |
+| 플러그인이 `Network access denied` | 다른 호스팅(예: GitHub Pages 커스텀 도메인) 쓰면 plugin manifest의 `allowedDomains`에 추가 |
+| Figma에서 `Type mismatch` 경고 | 같은 변수명이 다른 타입으로 이미 존재. Figma에서 수동 삭제 후 재import |
+| 컬렉션이 너무 많아 헷갈림 | 플러그인 툴바의 "Brands only" / "Promotions only" 필터 사용 |
+
+## 고급: `_base` 분리 운영
+
+토큰이 늘어나면 `_base`도 여러 파일로 쪼갤 수 있습니다.
+
+```yaml
+# brands/_typography/DESIGN.md
+---
+name: Typography Base
+typography:
+  body-md: { ... }
+  body-sm: { ... }
+---
+# brands/heritage/DESIGN.md
+---
+extends: brands/_typography  # 여러 단계 상속도 가능
+...
+---
+```
+
+체인은 깊이 제한이 없지만 5단계 이상은 추적이 어려워지니 권장하지 않습니다.
 
 ## 라이선스
 
-이 브리지 코드는 자유롭게 수정·배포 가능합니다. `@google/design.md` CLI는 Apache-2.0, Figma Plugin Typings는 MIT 라이선스를 따릅니다.
+이 브리지 코드는 자유롭게 수정·배포 가능합니다. `@google/design.md` CLI는 Apache-2.0, Figma Plugin Typings는 MIT입니다.

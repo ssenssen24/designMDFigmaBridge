@@ -5,12 +5,15 @@
 <style>
   :root {
     --bg: var(--figma-color-bg, #fff);
+    --bg2: var(--figma-color-bg-secondary, #f5f5f5);
+    --bg3: var(--figma-color-bg-tertiary, #e6e6e6);
     --fg: var(--figma-color-text, #1e1e1e);
-    --fg-secondary: var(--figma-color-text-secondary, #757575);
+    --fg2: var(--figma-color-text-secondary, #757575);
     --border: var(--figma-color-border, #e6e6e6);
     --accent: var(--figma-color-bg-brand, #0d99ff);
     --accent-fg: var(--figma-color-text-onbrand, #fff);
-    --input-bg: var(--figma-color-bg-secondary, #f5f5f5);
+    --warn: var(--figma-color-bg-warning-tertiary, #fef6dd);
+    --warn-fg: var(--figma-color-text-warning-tertiary, #5a3e00);
   }
   * { box-sizing: border-box; }
   body {
@@ -19,44 +22,53 @@
     color: var(--fg);
     background: var(--bg);
     padding: 12px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
   }
   h2 {
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 12px; font-weight: 600;
     margin: 0 0 4px;
   }
   p.hint {
-    color: var(--fg-secondary);
-    margin: 0 0 12px;
+    color: var(--fg2);
+    margin: 0 0 10px;
   }
-  label {
-    display: block;
+  details {
+    margin-bottom: 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  details summary {
+    padding: 6px 8px;
+    cursor: pointer;
     font-weight: 500;
-    margin-bottom: 4px;
+    list-style: none;
   }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before { content: "▸ "; color: var(--fg2); }
+  details[open] summary::before { content: "▾ "; }
+  details > div { padding: 0 8px 8px; }
+
   input[type="url"] {
     width: 100%;
     padding: 6px 8px;
     border: 1px solid var(--border);
     border-radius: 4px;
-    background: var(--input-bg);
+    background: var(--bg2);
     color: var(--fg);
     font: inherit;
   }
-  input[type="url"]:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
+  input[type="url"]:focus { outline: none; border-color: var(--accent); }
+
   .row {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
+    display: flex; gap: 6px; margin-top: 8px;
   }
   button {
     flex: 1;
-    padding: 8px 12px;
+    padding: 6px 10px;
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 4px;
     background: var(--bg);
     color: var(--fg);
     font: inherit;
@@ -64,74 +76,206 @@
     cursor: pointer;
   }
   button.primary {
-    background: var(--accent);
-    color: var(--accent-fg);
-    border-color: var(--accent);
+    background: var(--accent); color: var(--accent-fg); border-color: var(--accent);
   }
-  button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .section-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--fg2);
+    margin: 12px 0 4px;
+    font-weight: 600;
   }
+
+  .list {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow-y: auto;
+    background: var(--bg);
+    flex-shrink: 0;
+    max-height: 220px;
+  }
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: var(--bg2); }
+  .item input[type="checkbox"] { margin: 0; }
+  .item .name { flex: 1; }
+  .item .badge {
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    background: var(--bg3);
+    color: var(--fg2);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .item .exists {
+    font-size: 9px;
+    color: var(--fg2);
+  }
+  .empty {
+    padding: 16px;
+    text-align: center;
+    color: var(--fg2);
+  }
+
+  .toolbar {
+    display: flex; gap: 6px; margin: 6px 0;
+    font-size: 10px;
+  }
+  .toolbar button {
+    flex: 0 0 auto;
+    padding: 3px 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--fg2);
+  }
+
   #log {
-    margin-top: 12px;
+    margin-top: auto;
     padding: 8px;
-    background: var(--input-bg);
+    background: var(--bg2);
     border-radius: 4px;
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
     font-size: 10px;
     white-space: pre-wrap;
-    height: 130px;
+    height: 110px;
     overflow-y: auto;
-    color: var(--fg-secondary);
+    color: var(--fg2);
+    flex-shrink: 0;
   }
   #log .line { margin: 0; }
 </style>
 </head>
 <body>
   <h2>DESIGN.md → Figma Variables</h2>
-  <p class="hint">Paste the raw URL of <code>figma-payload.json</code> (e.g. from GitHub).</p>
+  <p class="hint">Pick collections from your manifest. Brands first, then promotions.</p>
 
-  <label for="url">Payload URL</label>
-  <input
-    id="url"
-    type="url"
-    placeholder="https://raw.githubusercontent.com/owner/repo/main/figma-payload.json"
-  />
+  <details id="settings">
+    <summary>Manifest URL</summary>
+    <div>
+      <input id="manifestUrl" type="url"
+        placeholder="https://raw.githubusercontent.com/.../master/payloads/manifest.json" />
+      <div class="row">
+        <button id="saveManifest" class="primary">Load manifest</button>
+      </div>
+    </div>
+  </details>
+
+  <div class="toolbar">
+    <button id="selectAll">Select all</button>
+    <button id="selectNone">Clear</button>
+    <button id="selectBrands">Brands only</button>
+    <button id="selectPromos">Promotions only</button>
+  </div>
+
+  <div id="list" class="list">
+    <div class="empty">No manifest loaded yet. Open "Manifest URL" above.</div>
+  </div>
 
   <div class="row">
     <button id="cancel">Close</button>
-    <button id="import" class="primary">Import</button>
+    <button id="import" class="primary" disabled>Import 0</button>
   </div>
 
   <div id="log"><p class="line">Ready.</p></div>
 
 <script>
-  const urlInput = document.getElementById("url");
-  const importBtn = document.getElementById("import");
-  const cancelBtn = document.getElementById("cancel");
-  const logEl = document.getElementById("log");
+  const $ = (id) => document.getElementById(id);
+  let entries = [];
 
-  function append(message) {
+  function append(msg) {
     const p = document.createElement("p");
     p.className = "line";
-    p.textContent = message;
-    logEl.appendChild(p);
-    logEl.scrollTop = logEl.scrollHeight;
+    p.textContent = msg;
+    $("log").appendChild(p);
+    $("log").scrollTop = $("log").scrollHeight;
   }
 
-  importBtn.addEventListener("click", () => {
-    const url = urlInput.value.trim();
-    if (!url) {
-      append("⚠ Please enter a URL.");
+  function render() {
+    const list = $("list");
+    if (!entries.length) {
+      list.innerHTML = '<div class="empty">No collections in manifest.</div>';
       return;
     }
-    importBtn.disabled = true;
-    cancelBtn.disabled = true;
-    logEl.innerHTML = "";
-    parent.postMessage({ pluginMessage: { type: "import", url } }, "*");
+    list.innerHTML = "";
+    for (const [i, e] of entries.entries()) {
+      const item = document.createElement("label");
+      item.className = "item";
+      item.innerHTML = `
+        <input type="checkbox" data-i="${i}" ${e._checked ? "checked" : ""} />
+        <span class="name">${escapeHtml(e.name)}</span>
+        ${e.existsLocally ? '<span class="exists">in file</span>' : ""}
+        <span class="badge">${e.kind}</span>
+      `;
+      list.appendChild(item);
+    }
+    list.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+      cb.addEventListener("change", (ev) => {
+        const i = Number(ev.target.dataset.i);
+        entries[i]._checked = ev.target.checked;
+        updateImportBtn();
+      });
+    });
+    updateImportBtn();
+  }
+
+  function updateImportBtn() {
+    const n = entries.filter((e) => e._checked).length;
+    const btn = $("import");
+    btn.disabled = n === 0;
+    btn.textContent = `Import ${n}`;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+    );
+  }
+
+  function applyFilter(fn) {
+    entries.forEach((e) => (e._checked = fn(e)));
+    render();
+  }
+
+  // Manifest load
+  $("saveManifest").addEventListener("click", () => {
+    const url = $("manifestUrl").value.trim();
+    if (!url) return append("⚠ Please enter a URL.");
+    parent.postMessage({ pluginMessage: { type: "set-manifest", url } }, "*");
   });
 
-  cancelBtn.addEventListener("click", () => {
+  // Toolbar
+  $("selectAll").addEventListener("click", () => applyFilter(() => true));
+  $("selectNone").addEventListener("click", () => applyFilter(() => false));
+  $("selectBrands").addEventListener("click", () =>
+    applyFilter((e) => e.kind === "brand"));
+  $("selectPromos").addEventListener("click", () =>
+    applyFilter((e) => e.kind === "promotion"));
+
+  // Import
+  $("import").addEventListener("click", () => {
+    const selected = entries.filter((e) => e._checked);
+    if (!selected.length) return;
+    $("import").disabled = true;
+    $("log").innerHTML = "";
+    parent.postMessage(
+      { pluginMessage: { type: "import", entries: selected } },
+      "*"
+    );
+  });
+
+  $("cancel").addEventListener("click", () => {
     parent.postMessage({ pluginMessage: { type: "close" } }, "*");
   });
 
@@ -139,12 +283,16 @@
     const msg = event.data.pluginMessage;
     if (!msg) return;
     if (msg.type === "init") {
-      urlInput.value = msg.url || "";
+      $("manifestUrl").value = msg.manifestUrl || "";
+      if (!msg.manifestUrl) $("settings").open = true;
+    } else if (msg.type === "manifest-loaded") {
+      entries = msg.entries.map((e) => ({ ...e, _checked: false }));
+      append(`📋 Loaded ${entries.length} collection(s).`);
+      render();
     } else if (msg.type === "log") {
       append(msg.message);
     } else if (msg.type === "done") {
-      importBtn.disabled = false;
-      cancelBtn.disabled = false;
+      updateImportBtn();
     }
   });
 </script>

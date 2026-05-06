@@ -1,17 +1,15 @@
 // figma-plugin/code.ts
 //
-// DESIGN.md Importer — fetches a figma-payload.json published by CI and
-// creates/updates Figma Variables in a single collection.
-//
-// Idempotent: re-running on the same payload updates values without
-// creating duplicates. Variables that were removed from DESIGN.md are
-// NOT auto-deleted (left for manual review to avoid accidental loss).
+// DESIGN.md Importer v2 — fetches a manifest.json listing available
+// collections, lets the user pick one or more via checkboxes, and imports
+// each as an independent Figma Variables Collection. Re-running on the
+// same payload updates values without creating duplicates.
 
 interface PayloadValue {
   color?: { r: number; g: number; b: number; a: number };
   number?: number;
   string?: string;
-  alias?: string; // target variable name (slash-delimited)
+  alias?: string;
 }
 
 interface PayloadVariable {
@@ -27,72 +25,117 @@ interface Payload {
   variables: PayloadVariable[];
 }
 
-const STORAGE_KEY = "design-md-import-url";
+interface ManifestEntry {
+  name: string;
+  url: string;
+  kind: "brand" | "promotion";
+}
 
-figma.showUI(__html__, { width: 380, height: 320, themeColors: true });
+const STORAGE_MANIFEST_URL = "design-md.manifest-url";
 
-// Restore last-used URL on open.
+figma.showUI(__html__, { width: 420, height: 540, themeColors: true });
+
 (async () => {
-  const savedUrl = (await figma.clientStorage.getAsync(STORAGE_KEY)) || "";
-  figma.ui.postMessage({ type: "init", url: savedUrl });
+  const url = (await figma.clientStorage.getAsync(STORAGE_MANIFEST_URL)) || "";
+  figma.ui.postMessage({ type: "init", manifestUrl: url });
+  if (url) await loadManifest(url);
 })();
 
 figma.ui.onmessage = async (msg) => {
-  if (msg.type === "import") {
-    try {
-      await figma.clientStorage.setAsync(STORAGE_KEY, msg.url);
-      log("📥 Fetching payload…");
-
-      const res = await fetch(msg.url, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status} — check the URL`);
-      const payload = (await res.json()) as Payload;
-
-      if (!Array.isArray(payload.variables)) {
-        throw new Error("Invalid payload: missing 'variables' array");
-      }
-
-      log(`📦 Loaded ${payload.variables.length} tokens. Importing…`);
-      const result = importPayload(payload);
-
-      log(
-        `✅ Done. Created ${result.created}, updated ${result.updated}, ` +
-          `skipped ${result.skipped}.`,
-      );
-      figma.notify(
-        `✅ Imported ${result.created + result.updated} variables`,
-      );
-      figma.ui.postMessage({ type: "done" });
-    } catch (err) {
-      const m = err instanceof Error ? err.message : String(err);
-      log(`❌ ${m}`);
-      figma.notify(`❌ Import failed: ${m}`, { error: true });
-      figma.ui.postMessage({ type: "done" });
+  try {
+    if (msg.type === "set-manifest") {
+      await figma.clientStorage.setAsync(STORAGE_MANIFEST_URL, msg.url);
+      await loadManifest(msg.url);
+    } else if (msg.type === "import") {
+      await importMany(msg.entries);
+    } else if (msg.type === "close") {
+      figma.closePlugin();
     }
-  } else if (msg.type === "close") {
-    figma.closePlugin();
+  } catch (err) {
+    const m = err instanceof Error ? err.message : String(err);
+    figma.ui.postMessage({ type: "log", message: `❌ ${m}` });
+    figma.notify(`❌ ${m}`, { error: true });
+    figma.ui.postMessage({ type: "done" });
   }
 };
 
-function log(message: string) {
-  figma.ui.postMessage({ type: "log", message });
+async function loadManifest(url: string) {
+  figma.ui.postMessage({ type: "log", message: `📥 Loading manifest…` });
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Manifest HTTP ${res.status}`);
+  const entries = (await res.json()) as ManifestEntry[];
+  if (!Array.isArray(entries)) throw new Error("Invalid manifest format");
+
+  // Sort: brands first, then promotions by name.
+  entries.sort((a, b) => {
+    if (a.kind !== b.kind) return a.kind === "brand" ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  // Annotate which collections already exist locally
+  const existingNames = new Set(
+    figma.variables.getLocalVariableCollections().map((c) => c.name),
+  );
+  const annotated = entries.map((e) => ({
+    ...e,
+    existsLocally: existingNames.has(e.name),
+  }));
+
+  figma.ui.postMessage({ type: "manifest-loaded", entries: annotated });
+}
+
+async function importMany(entries: ManifestEntry[]) {
+  let totalCreated = 0;
+  let totalUpdated = 0;
+  let totalSkipped = 0;
+
+  for (const entry of entries) {
+    figma.ui.postMessage({
+      type: "log",
+      message: `\n📦 ${entry.name}…`,
+    });
+    const res = await fetch(entry.url, { cache: "no-store" });
+    if (!res.ok) {
+      figma.ui.postMessage({
+        type: "log",
+        message: `  ❌ HTTP ${res.status} — skipped`,
+      });
+      continue;
+    }
+    const payload = (await res.json()) as Payload;
+    const result = importPayload(payload);
+    totalCreated += result.created;
+    totalUpdated += result.updated;
+    totalSkipped += result.skipped;
+    figma.ui.postMessage({
+      type: "log",
+      message: `  ✅ +${result.created} new, ~${result.updated} updated, ${result.skipped} skipped`,
+    });
+  }
+
+  figma.ui.postMessage({
+    type: "log",
+    message:
+      `\n🎉 Done. Total: +${totalCreated} new, ~${totalUpdated} updated, ` +
+      `${totalSkipped} skipped across ${entries.length} collection(s).`,
+  });
+  figma.notify(`✅ Imported ${totalCreated + totalUpdated} variables`);
+  figma.ui.postMessage({ type: "done" });
 }
 
 function importPayload(payload: Payload) {
-  // 1. Find or create the target collection.
   const collections = figma.variables.getLocalVariableCollections();
   let collection = collections.find((c) => c.name === payload.collection);
   if (!collection) {
     collection = figma.variables.createVariableCollection(payload.collection);
-    log(`+ Created collection "${payload.collection}"`);
   }
 
-  // Use the first mode (Default) — multi-mode is out of scope for v1.
   const modeId = collection.modes[0].modeId;
   if (collection.modes[0].name !== payload.mode) {
     collection.renameMode(modeId, payload.mode);
   }
 
-  // 2. Index existing variables in this collection by name.
+  // Index existing vars by name within this collection.
   const allVars = figma.variables.getLocalVariables();
   const byName = new Map<string, Variable>();
   for (const v of allVars) {
@@ -105,28 +148,30 @@ function importPayload(payload: Payload) {
   let updated = 0;
   let skipped = 0;
 
-  // 3. Pass 1 — ensure every variable exists with the correct type.
-  //    (Aliases need their targets to exist before we can resolve them.)
+  // Pass 1: ensure variables exist with correct type.
   for (const def of payload.variables) {
     const existing = byName.get(def.name);
     if (!existing) {
-      const v = figma.variables.createVariable(def.name, collection, def.type);
+      const v = figma.variables.createVariable(
+        def.name,
+        collection,
+        def.type,
+      );
       byName.set(def.name, v);
       created++;
     } else if (existing.resolvedType !== def.type) {
-      // Type mismatch — Figma can't change a variable's type after creation.
-      // Skip and warn so the user can resolve manually.
-      log(
-        `⚠ Skipped "${def.name}": existing type ${existing.resolvedType} ` +
-          `≠ payload type ${def.type}. Delete the variable in Figma to retype.`,
-      );
+      figma.ui.postMessage({
+        type: "log",
+        message:
+          `  ⚠ Skipped "${def.name}": type ${existing.resolvedType} ≠ ${def.type}`,
+      });
       skipped++;
     } else {
       updated++;
     }
   }
 
-  // 4. Pass 2 — set values, resolving aliases by name lookup.
+  // Pass 2: set values, resolving aliases.
   for (const def of payload.variables) {
     const v = byName.get(def.name);
     if (!v || v.resolvedType !== def.type) continue;
@@ -135,16 +180,13 @@ function importPayload(payload: Payload) {
       if (def.value.alias !== undefined) {
         const target = byName.get(def.value.alias);
         if (!target) {
-          log(`⚠ Alias target missing: ${def.name} → ${def.value.alias}`);
+          figma.ui.postMessage({
+            type: "log",
+            message: `  ⚠ Alias missing: ${def.name} → ${def.value.alias}`,
+          });
           continue;
         }
-        if (target.resolvedType !== v.resolvedType) {
-          log(
-            `⚠ Alias type mismatch: ${def.name} (${v.resolvedType}) → ` +
-              `${def.value.alias} (${target.resolvedType})`,
-          );
-          continue;
-        }
+        if (target.resolvedType !== v.resolvedType) continue;
         v.setValueForMode(modeId, figma.variables.createVariableAlias(target));
       } else if (def.value.color !== undefined) {
         v.setValueForMode(modeId, def.value.color);
@@ -155,7 +197,10 @@ function importPayload(payload: Payload) {
       }
     } catch (err) {
       const m = err instanceof Error ? err.message : String(err);
-      log(`⚠ Failed to set "${def.name}": ${m}`);
+      figma.ui.postMessage({
+        type: "log",
+        message: `  ⚠ Failed "${def.name}": ${m}`,
+      });
     }
   }
 

@@ -1,13 +1,13 @@
 {
   "name": "design-md-figma-bridge",
-  "version": "1.0.0",
-  "description": "Sync DESIGN.md tokens into Figma Variables (Professional plan friendly)",
+  "version": "2.0.0",
+  "description": "Sync multi-brand DESIGN.md tokens into Figma Variables (Professional plan friendly)",
   "private": true,
   "type": "module",
   "scripts": {
-    "lint": "npx -y @google/design.md lint DESIGN.md",
-    "export": "npx -y @google/design.md export --format dtcg DESIGN.md > tokens.json",
-    "convert": "node scripts/dtcg-to-figma.mjs tokens.json figma-payload.json",
-    "build": "npm run lint && npm run export && npm run convert"
+    "merge": "node scripts/merge.mjs"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
   }
 }

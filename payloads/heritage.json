@@ -1,6 +1,6 @@
 {
-  "generated": "2026-05-06T05:27:07.816Z",
-  "collection": "Brand",
+  "generated": "2026-05-06T06:56:08.017Z",
+  "collection": "heritage",
   "mode": "Default",
   "variables": [
     {
@@ -8,9 +8,9 @@
       "type": "COLOR",
       "value": {
         "color": {
-          "r": 0.043,
-          "g": 0.443,
-          "b": 0.725,
+          "r": 0.102,
+          "g": 0.11,
+          "b": 0.118,
           "a": 1
         }
       }
@@ -20,9 +20,9 @@
       "type": "COLOR",
       "value": {
         "color": {
-          "r": 0.455,
-          "g": 0.196,
-          "b": 1,
+          "r": 0.424,
+          "g": 0.447,
+          "b": 0.471,
           "a": 1
         }
       }
@@ -32,9 +32,9 @@
       "type": "COLOR",
       "value": {
         "color": {
-          "r": 0,
-          "g": 0.588,
-          "b": 1,
+          "r": 0.722,
+          "g": 0.259,
+          "b": 0.18,
           "a": 1
         }
       }
@@ -44,9 +44,9 @@
       "type": "COLOR",
       "value": {
         "color": {
-          "r": 0.922,
-          "g": 0.925,
-          "b": 0.933,
+          "r": 0.969,
+          "g": 0.961,
+          "b": 0.949,
           "a": 1
         }
       }
@@ -64,6 +64,13 @@
       }
     },
     {
+      "name": "spacing/xs",
+      "type": "FLOAT",
+      "value": {
+        "number": 4
+      }
+    },
+    {
       "name": "spacing/sm",
       "type": "FLOAT",
       "value": {
@@ -75,6 +82,27 @@
       "type": "FLOAT",
       "value": {
         "number": 16
+      }
+    },
+    {
+      "name": "spacing/lg",
+      "type": "FLOAT",
+      "value": {
+        "number": 24
+      }
+    },
+    {
+      "name": "spacing/xl",
+      "type": "FLOAT",
+      "value": {
+        "number": 48
+      }
+    },
+    {
+      "name": "rounded/none",
+      "type": "FLOAT",
+      "value": {
+        "number": 0
       }
     },
     {
@@ -92,38 +120,24 @@
       }
     },
     {
-      "name": "typography/h1/fontFamily",
-      "type": "STRING",
+      "name": "rounded/lg",
+      "type": "FLOAT",
       "value": {
-        "string": "Noto Sans KR"
+        "number": 16
       }
     },
     {
-      "name": "typography/h1/fontSize",
+      "name": "rounded/full",
       "type": "FLOAT",
       "value": {
-        "number": 48
-      }
-    },
-    {
-      "name": "typography/h1/fontWeight",
-      "type": "FLOAT",
-      "value": {
-        "number": 700
-      }
-    },
-    {
-      "name": "typography/h1/lineHeight",
-      "type": "FLOAT",
-      "value": {
-        "number": 1.2
+        "number": 9999
       }
     },
     {
       "name": "typography/body-md/fontFamily",
       "type": "STRING",
       "value": {
-        "string": "Noto Sans KR"
+        "string": "Public Sans"
       }
     },
     {
@@ -141,10 +155,31 @@
       }
     },
     {
+      "name": "typography/body-sm/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "Pretendard"
+      }
+    },
+    {
+      "name": "typography/body-sm/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 14
+      }
+    },
+    {
+      "name": "typography/body-sm/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 400
+      }
+    },
+    {
       "name": "typography/label-caps/fontFamily",
       "type": "STRING",
       "value": {
-        "string": "Space Grotesk"
+        "string": "Pretendard"
       }
     },
     {
@@ -155,10 +190,38 @@
       }
     },
     {
+      "name": "typography/label-caps/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 500
+      }
+    },
+    {
       "name": "typography/label-caps/letterSpacing",
       "type": "FLOAT",
       "value": {
         "number": 0.8
+      }
+    },
+    {
+      "name": "typography/h1/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "Public Sans"
+      }
+    },
+    {
+      "name": "typography/h1/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 48
+      }
+    },
+    {
+      "name": "typography/h1/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 700
       }
     }
   ]
