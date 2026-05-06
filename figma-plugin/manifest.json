@@ -1,0 +1,14 @@
+{
+  "name": "DESIGN.md Importer",
+  "id": "design-md-importer",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://raw.githubusercontent.com"
+    ],
+    "reasoning": "Fetches the Figma payload JSON published by the DESIGN.md repository CI."
+  }
+}

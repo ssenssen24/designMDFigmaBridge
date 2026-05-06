@@ -1,0 +1,51 @@
+name: Publish Figma Tokens
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "DESIGN.md"
+      - "scripts/dtcg-to-figma.mjs"
+      - ".github/workflows/publish-tokens.yml"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 1) Validate the design system file.
+      - name: Lint DESIGN.md
+        run: npx -y @google/design.md lint DESIGN.md
+
+      # 2) Export DTCG tokens from DESIGN.md.
+      - name: Export DTCG
+        run: npx -y @google/design.md export --format dtcg DESIGN.md > tokens.json
+
+      # 3) Convert DTCG to a Figma-friendly payload.
+      - name: Convert to Figma payload
+        env:
+          FIGMA_COLLECTION_NAME: Brand
+          FIGMA_MODE_NAME: Default
+        run: node scripts/dtcg-to-figma.mjs tokens.json figma-payload.json
+
+      # 4) Commit the generated payload back to main so the plugin can fetch it
+      #    via raw.githubusercontent.com. The path filter above prevents loops.
+      - name: Commit payload
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add figma-payload.json tokens.json
+          if git diff --staged --quiet; then
+            echo "No token changes — skipping commit."
+          else
+            git commit -m "chore(tokens): publish Figma payload [skip ci]"
+            git push
+          fi

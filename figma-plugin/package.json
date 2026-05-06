@@ -1,0 +1,14 @@
+{
+  "name": "design-md-importer",
+  "version": "1.0.0",
+  "description": "Import DESIGN.md tokens into Figma Variables",
+  "main": "code.js",
+  "scripts": {
+    "build": "tsc -p .",
+    "watch": "tsc -p . --watch"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.100.0",
+    "typescript": "^5.4.0"
+  }
+}

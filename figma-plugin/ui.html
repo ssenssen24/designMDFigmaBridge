@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  :root {
+    --bg: var(--figma-color-bg, #fff);
+    --fg: var(--figma-color-text, #1e1e1e);
+    --fg-secondary: var(--figma-color-text-secondary, #757575);
+    --border: var(--figma-color-border, #e6e6e6);
+    --accent: var(--figma-color-bg-brand, #0d99ff);
+    --accent-fg: var(--figma-color-text-onbrand, #fff);
+    --input-bg: var(--figma-color-bg-secondary, #f5f5f5);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 11px/1.4 -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    padding: 12px;
+  }
+  h2 {
+    font-size: 12px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  p.hint {
+    color: var(--fg-secondary);
+    margin: 0 0 12px;
+  }
+  label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  input[type="url"] {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--fg);
+    font: inherit;
+  }
+  input[type="url"]:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  button {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--fg);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  button.primary {
+    background: var(--accent);
+    color: var(--accent-fg);
+    border-color: var(--accent);
+  }
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  #log {
+    margin-top: 12px;
+    padding: 8px;
+    background: var(--input-bg);
+    border-radius: 4px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 10px;
+    white-space: pre-wrap;
+    height: 130px;
+    overflow-y: auto;
+    color: var(--fg-secondary);
+  }
+  #log .line { margin: 0; }
+</style>
+</head>
+<body>
+  <h2>DESIGN.md → Figma Variables</h2>
+  <p class="hint">Paste the raw URL of <code>figma-payload.json</code> (e.g. from GitHub).</p>
+
+  <label for="url">Payload URL</label>
+  <input
+    id="url"
+    type="url"
+    placeholder="https://raw.githubusercontent.com/owner/repo/main/figma-payload.json"
+  />
+
+  <div class="row">
+    <button id="cancel">Close</button>
+    <button id="import" class="primary">Import</button>
+  </div>
+
+  <div id="log"><p class="line">Ready.</p></div>
+
+<script>
+  const urlInput = document.getElementById("url");
+  const importBtn = document.getElementById("import");
+  const cancelBtn = document.getElementById("cancel");
+  const logEl = document.getElementById("log");
+
+  function append(message) {
+    const p = document.createElement("p");
+    p.className = "line";
+    p.textContent = message;
+    logEl.appendChild(p);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  importBtn.addEventListener("click", () => {
+    const url = urlInput.value.trim();
+    if (!url) {
+      append("⚠ Please enter a URL.");
+      return;
+    }
+    importBtn.disabled = true;
+    cancelBtn.disabled = true;
+    logEl.innerHTML = "";
+    parent.postMessage({ pluginMessage: { type: "import", url } }, "*");
+  });
+
+  cancelBtn.addEventListener("click", () => {
+    parent.postMessage({ pluginMessage: { type: "close" } }, "*");
+  });
+
+  window.addEventListener("message", (event) => {
+    const msg = event.data.pluginMessage;
+    if (!msg) return;
+    if (msg.type === "init") {
+      urlInput.value = msg.url || "";
+    } else if (msg.type === "log") {
+      append(msg.message);
+    } else if (msg.type === "done") {
+      importBtn.disabled = false;
+      cancelBtn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
