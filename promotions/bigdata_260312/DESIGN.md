@@ -1,50 +1,49 @@
 ---
-name: BigData 2026
-source:
-  figma:
-    fileKey: x5T7ODnNIs3YTfELogd9g0
-    nodeId: "38:6"
-    url: "https://www.figma.com/design/x5T7ODnNIs3YTfELogd9g0/2026%EB%85%84?node-id=38-6"
+extends: brands/_base
+name: bigdata 260312
 colors:
-  brand:
-    primary: "#5816FF" # 주요 CTA/강조 버튼
-    primary-2: "#5216FF" # 텍스트 강조/라인/포커스
-    purple: "#8054FF" # 섹션 바/카드 보더 포인트
-    purple-soft: "#9672FF" # 다크 영역 보조 텍스트
-    cyan: "#52FFFD" # 헤더 아웃라인 CTA/강조 라인
-  neutral:
-    black: "#000000"
-    ink: "#07080E" # 가장 어두운 배경 섹션
-    dark-1: "#23232A" # 카드/패널 배경
-    dark-2: "#2D3137" # 섹션 배경
-    mid: "#595B66" # 태그/보조 UI
-    line: "#B7B8BF" # 라이트 카드 보더
-    surface: "#EFF2F5" # 라이트 섹션 배경
-    on-dark: "#FFFFFF"
-    on-light: "#141414"
+  primary: "#5816FF" # 주요 CTA/강조 버튼
+  primary-2: "#5216FF" # 텍스트 강조/라인/포커스
+  accent: "#8054FF" # 섹션 바/카드 보더 포인트
+  accent-2: "#52FFFD" # 헤더 아웃라인 CTA/강조 라인
+  surface-dark: "#2D3137" # 섹션 배경
+  card-dark: "#23232A" # 카드/패널 배경
+  ink: "#07080E" # 가장 어두운 배경 섹션
+  surface-light: "#EFF2F5" # 라이트 섹션 배경
+  text-on-dark: "#FFFFFF"
+  text-on-light: "#141414"
+  line: "#B7B8BF" # 라이트 카드 보더
 typography:
-  display:
+  hero-subtitle:
     fontFamily: "SB Aggro"
-    weights:
-      light: 300
-      bold: 700
-    size:
-      hero-subtitle: 30px
-      hero-title: 86px
-  text:
+    fontSize: 30px
+    fontWeight: 300
+    lineHeight: 1.2
+  hero-title:
+    fontFamily: "SB Aggro"
+    fontSize: 86px
+    fontWeight: 700
+    lineHeight: 1.1
+  section-title:
     fontFamily: Pretendard
-    weights:
-      light: 300
-      regular: 400
-      medium: 500
-      bold: 700
-      black: 900
-    size:
-      h2: 56px
-      h3: 30px
-      body-lg: 32px
-      body-md: 24px
-      body-sm: 18px
+    fontSize: 56px
+    fontWeight: 700
+    lineHeight: 1.2
+  section-subtitle:
+    fontFamily: Pretendard
+    fontSize: 32px
+    fontWeight: 300
+    lineHeight: 1.3
+  body-md:
+    fontFamily: Pretendard
+    fontSize: 24px
+    fontWeight: 400
+    lineHeight: 1.5
+  body-sm:
+    fontFamily: Pretendard
+    fontSize: 18px
+    fontWeight: 400
+    lineHeight: 1.5
 rounded:
   xs: 5px
   sm: 8px
@@ -56,34 +55,13 @@ spacing:
   sectionY: 100px
   sectionGap: 50px
   cardGap: 24px
-components:
-  button-outline-cyan:
-    backgroundColor: "transparent"
-    borderColor: "{colors.brand.cyan}"
-    textColor: "{colors.brand.cyan}"
-    height: 68px
-  button-dark-muted:
-    backgroundColor: "{colors.neutral.black}"
-    borderColor: "#77849D"
-    textColor: "#77849D"
-    height: 68px
-  button-solid-primary:
-    backgroundColor: "{colors.brand.primary}"
-    textColor: "{colors.neutral.on-dark}"
-    rounded: "{rounded.xl}"
-  card-dark:
-    backgroundColor: "{colors.neutral.dark-1}"
-    borderColor: "{colors.brand.purple}"
-    rounded: "{rounded.lg}"
-  card-light:
-    backgroundColor: "#FFFFFF"
-    borderColor: "{colors.neutral.line}"
-    rounded: "{rounded.lg}"
 ---
 
 ## Overview
 
 빅데이터분석기사 “합격 보장 코스” 프로모션 랜딩 시안. **다크(헤더/중간 섹션) + 라이트(후기/교재 섹션)**를 번갈아 배치해서 리듬을 만들고, 브랜드 포인트 컬러(퍼플/시안)로 CTA와 카드 보더를 강조합니다.
+
+Figma 원본: `https://www.figma.com/design/x5T7ODnNIs3YTfELogd9g0/2026%EB%85%84?node-id=38-6`
 
 ## Layout (섹션 구성)
 
