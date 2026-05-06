@@ -1,0 +1,405 @@
+{
+  "generated": "2026-05-06T08:02:04.088Z",
+  "collection": "bigdata_260312",
+  "mode": "Default",
+  "variables": [
+    {
+      "name": "color/primary",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.345,
+          "g": 0.086,
+          "b": 1,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/primary-2",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.322,
+          "g": 0.086,
+          "b": 1,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/accent",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.502,
+          "g": 0.329,
+          "b": 1,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/accent-2",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.322,
+          "g": 1,
+          "b": 0.992,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/surface-dark",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.176,
+          "g": 0.192,
+          "b": 0.216,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/card-dark",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.137,
+          "g": 0.137,
+          "b": 0.165,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/ink",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.027,
+          "g": 0.031,
+          "b": 0.055,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/surface-light",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.937,
+          "g": 0.949,
+          "b": 0.961,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/text-on-dark",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 1,
+          "g": 1,
+          "b": 1,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/text-on-light",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.078,
+          "g": 0.078,
+          "b": 0.078,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/line",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.718,
+          "g": 0.722,
+          "b": 0.749,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "spacing/xs",
+      "type": "FLOAT",
+      "value": {
+        "number": 4
+      }
+    },
+    {
+      "name": "spacing/sm",
+      "type": "FLOAT",
+      "value": {
+        "number": 8
+      }
+    },
+    {
+      "name": "spacing/md",
+      "type": "FLOAT",
+      "value": {
+        "number": 16
+      }
+    },
+    {
+      "name": "spacing/lg",
+      "type": "FLOAT",
+      "value": {
+        "number": 24
+      }
+    },
+    {
+      "name": "spacing/xl",
+      "type": "FLOAT",
+      "value": {
+        "number": 48
+      }
+    },
+    {
+      "name": "spacing/sectionY",
+      "type": "FLOAT",
+      "value": {
+        "number": 100
+      }
+    },
+    {
+      "name": "spacing/sectionGap",
+      "type": "FLOAT",
+      "value": {
+        "number": 50
+      }
+    },
+    {
+      "name": "spacing/cardGap",
+      "type": "FLOAT",
+      "value": {
+        "number": 24
+      }
+    },
+    {
+      "name": "rounded/none",
+      "type": "FLOAT",
+      "value": {
+        "number": 0
+      }
+    },
+    {
+      "name": "rounded/sm",
+      "type": "FLOAT",
+      "value": {
+        "number": 8
+      }
+    },
+    {
+      "name": "rounded/md",
+      "type": "FLOAT",
+      "value": {
+        "number": 20
+      }
+    },
+    {
+      "name": "rounded/lg",
+      "type": "FLOAT",
+      "value": {
+        "number": 25
+      }
+    },
+    {
+      "name": "rounded/full",
+      "type": "FLOAT",
+      "value": {
+        "number": 9999
+      }
+    },
+    {
+      "name": "rounded/xs",
+      "type": "FLOAT",
+      "value": {
+        "number": 5
+      }
+    },
+    {
+      "name": "rounded/xl",
+      "type": "FLOAT",
+      "value": {
+        "number": 30
+      }
+    },
+    {
+      "name": "rounded/hero",
+      "type": "FLOAT",
+      "value": {
+        "number": 50
+      }
+    },
+    {
+      "name": "typography/body-md/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "Pretendard"
+      }
+    },
+    {
+      "name": "typography/body-md/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 24
+      }
+    },
+    {
+      "name": "typography/body-md/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 400
+      }
+    },
+    {
+      "name": "typography/body-sm/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "Pretendard"
+      }
+    },
+    {
+      "name": "typography/body-sm/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 18
+      }
+    },
+    {
+      "name": "typography/body-sm/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 400
+      }
+    },
+    {
+      "name": "typography/label-caps/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "Pretendard"
+      }
+    },
+    {
+      "name": "typography/label-caps/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 12
+      }
+    },
+    {
+      "name": "typography/label-caps/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 500
+      }
+    },
+    {
+      "name": "typography/label-caps/letterSpacing",
+      "type": "FLOAT",
+      "value": {
+        "number": 0.8
+      }
+    },
+    {
+      "name": "typography/hero-subtitle/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "SB Aggro"
+      }
+    },
+    {
+      "name": "typography/hero-subtitle/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 30
+      }
+    },
+    {
+      "name": "typography/hero-subtitle/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 300
+      }
+    },
+    {
+      "name": "typography/hero-title/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "SB Aggro"
+      }
+    },
+    {
+      "name": "typography/hero-title/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 86
+      }
+    },
+    {
+      "name": "typography/hero-title/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 700
+      }
+    },
+    {
+      "name": "typography/section-title/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "Pretendard"
+      }
+    },
+    {
+      "name": "typography/section-title/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 56
+      }
+    },
+    {
+      "name": "typography/section-title/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 700
+      }
+    },
+    {
+      "name": "typography/section-subtitle/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "Pretendard"
+      }
+    },
+    {
+      "name": "typography/section-subtitle/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 32
+      }
+    },
+    {
+      "name": "typography/section-subtitle/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 300
+      }
+    }
+  ]
+}
