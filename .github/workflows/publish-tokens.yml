@@ -2,7 +2,7 @@ name: Publish Figma Tokens
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - "DESIGN.md"
       - "scripts/dtcg-to-figma.mjs"
