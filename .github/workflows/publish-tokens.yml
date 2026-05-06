@@ -2,50 +2,139 @@ name: Publish Figma Tokens
 
 on:
   push:
-    branches: [master]
+    branches: [master, main]
     paths:
-      - "DESIGN.md"
-      - "scripts/dtcg-to-figma.mjs"
+      - "brands/**/DESIGN.md"
+      - "promotions/**/DESIGN.md"
+      - "scripts/**"
       - ".github/workflows/publish-tokens.yml"
   workflow_dispatch:
 
 jobs:
+  # 1) Discover all DESIGN.md files (excluding _base and _archive).
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      designs: ${{ steps.find.outputs.designs }}
+      count: ${{ steps.find.outputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: find
+        run: |
+          designs=$(find brands promotions \
+            -name "DESIGN.md" \
+            -not -path "*/_base/*" \
+            -not -path "*/_archive/*" \
+            2>/dev/null \
+            | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          count=$(echo "$designs" | jq 'length')
+          echo "designs=$designs" >> "$GITHUB_OUTPUT"
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          echo "Discovered $count design(s):"
+          echo "$designs" | jq -r '.[]'
+
+  # 2) For each discovered DESIGN.md: merge ancestors → lint → export → convert.
   publish:
+    needs: discover
+    if: needs.discover.outputs.count != '0'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        design: ${{ fromJson(needs.discover.outputs.designs) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install merge dependencies
+        run: npm ci --silent || npm install --silent
+
+      - name: Compute collection name
+        id: name
+        run: |
+          dir=$(dirname "${{ matrix.design }}")
+          name=$(basename "$dir")
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - name: Merge inheritance chain
+        run: |
+          mkdir -p tmp
+          node scripts/merge.mjs "${{ matrix.design }}" "tmp/${{ steps.name.outputs.name }}.merged.md"
+
+      - name: Lint merged file
+        run: npx -y @google/design.md lint "tmp/${{ steps.name.outputs.name }}.merged.md"
+
+      - name: Export DTCG
+        run: |
+          npx -y @google/design.md export --format dtcg \
+            "tmp/${{ steps.name.outputs.name }}.merged.md" \
+            > "tmp/${{ steps.name.outputs.name }}.dtcg.json"
+
+      - name: Convert to Figma payload
+        env:
+          FIGMA_COLLECTION_NAME: ${{ steps.name.outputs.name }}
+        run: |
+          mkdir -p payloads
+          node scripts/dtcg-to-figma.mjs \
+            "tmp/${{ steps.name.outputs.name }}.dtcg.json" \
+            "payloads/${{ steps.name.outputs.name }}.json"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: payload-${{ steps.name.outputs.name }}
+          path: payloads/${{ steps.name.outputs.name }}.json
+          retention-days: 1
+
+  # 3) Collect all payloads, generate manifest.json, commit to repo.
+  commit:
+    needs: publish
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/download-artifact@v4
         with:
-          node-version: 20
+          path: payloads
+          pattern: payload-*
+          merge-multiple: true
 
-      # 1) Validate the design system file.
-      - name: Lint DESIGN.md
-        run: npx -y @google/design.md lint DESIGN.md
+      - name: Generate manifest.json
+        run: |
+          # Build manifest with metadata for the plugin's dropdown UI.
+          owner_repo="${{ github.repository }}"
+          branch="${{ github.ref_name }}"
+          base_url="https://raw.githubusercontent.com/$owner_repo/$branch/payloads"
 
-      # 2) Export DTCG tokens from DESIGN.md.
-      - name: Export DTCG
-        run: npx -y @google/design.md export --format dtcg DESIGN.md > tokens.json
+          ls payloads/*.json 2>/dev/null \
+            | grep -v "manifest.json" \
+            | sort \
+            | jq -R -s --arg base "$base_url" -c '
+                split("\n")
+                | map(select(length > 0))
+                | map({
+                    name: (split("/")[-1] | rtrimstr(".json")),
+                    url: ($base + "/" + (split("/")[-1])),
+                    kind: (
+                      if test("/2[0-9]{3}-") then "promotion"
+                      else "brand"
+                      end
+                    )
+                  })
+              ' > payloads/manifest.json
+          cat payloads/manifest.json
 
-      # 3) Convert DTCG to a Figma-friendly payload.
-      - name: Convert to Figma payload
-        env:
-          FIGMA_COLLECTION_NAME: Brand
-          FIGMA_MODE_NAME: Default
-        run: node scripts/dtcg-to-figma.mjs tokens.json figma-payload.json
-
-      # 4) Commit the generated payload back to main so the plugin can fetch it
-      #    via raw.githubusercontent.com. The path filter above prevents loops.
-      - name: Commit payload
+      - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add figma-payload.json tokens.json
+          git add payloads/
           if git diff --staged --quiet; then
-            echo "No token changes — skipping commit."
+            echo "No token changes — nothing to commit."
           else
-            git commit -m "chore(tokens): publish Figma payload [skip ci]"
+            git commit -m "chore(tokens): publish [skip ci]"
             git push
           fi

@@ -1,10 +1,9 @@
 node_modules/
 *.log
 
-# Plugin build artifacts (regenerate with `npm run build`)
+# Plugin build artifacts (regenerate locally with `npm run build`)
 figma-plugin/code.js
 figma-plugin/code.js.map
 
-# Sample/test files (committed to main by CI, not by hand)
-sample-tokens.json
-sample-payload.json
+# CI scratch space
+tmp/

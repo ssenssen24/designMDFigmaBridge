@@ -9,6 +9,6 @@
     "allowedDomains": [
       "https://raw.githubusercontent.com"
     ],
-    "reasoning": "Fetches the Figma payload JSON published by the DESIGN.md repository CI."
+    "reasoning": "Fetches manifest.json and per-collection payload files from the DESIGN.md repository."
   }
 }
