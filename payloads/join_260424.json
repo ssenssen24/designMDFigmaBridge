@@ -1,0 +1,252 @@
+{
+  "generated": "2026-05-06T06:56:06.332Z",
+  "collection": "join_260424",
+  "mode": "Default",
+  "variables": [
+    {
+      "name": "color/primary",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.102,
+          "g": 0.11,
+          "b": 0.118,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/secondary",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.424,
+          "g": 0.447,
+          "b": 0.471,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/tertiary",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.722,
+          "g": 0.259,
+          "b": 0.18,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/neutral",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.969,
+          "g": 0.961,
+          "b": 0.949,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/on-tertiary",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 1,
+          "g": 1,
+          "b": 1,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/accent",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.533,
+          "g": 0.69,
+          "b": 0.294,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/promo-bg",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.941,
+          "g": 0.937,
+          "b": 0.886,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "spacing/xs",
+      "type": "FLOAT",
+      "value": {
+        "number": 4
+      }
+    },
+    {
+      "name": "spacing/sm",
+      "type": "FLOAT",
+      "value": {
+        "number": 8
+      }
+    },
+    {
+      "name": "spacing/md",
+      "type": "FLOAT",
+      "value": {
+        "number": 16
+      }
+    },
+    {
+      "name": "spacing/lg",
+      "type": "FLOAT",
+      "value": {
+        "number": 24
+      }
+    },
+    {
+      "name": "spacing/xl",
+      "type": "FLOAT",
+      "value": {
+        "number": 48
+      }
+    },
+    {
+      "name": "rounded/none",
+      "type": "FLOAT",
+      "value": {
+        "number": 0
+      }
+    },
+    {
+      "name": "rounded/sm",
+      "type": "FLOAT",
+      "value": {
+        "number": 4
+      }
+    },
+    {
+      "name": "rounded/md",
+      "type": "FLOAT",
+      "value": {
+        "number": 8
+      }
+    },
+    {
+      "name": "rounded/lg",
+      "type": "FLOAT",
+      "value": {
+        "number": 16
+      }
+    },
+    {
+      "name": "rounded/full",
+      "type": "FLOAT",
+      "value": {
+        "number": 9999
+      }
+    },
+    {
+      "name": "typography/body-md/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "Public Sans"
+      }
+    },
+    {
+      "name": "typography/body-md/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 16
+      }
+    },
+    {
+      "name": "typography/body-md/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 400
+      }
+    },
+    {
+      "name": "typography/body-sm/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "Pretendard"
+      }
+    },
+    {
+      "name": "typography/body-sm/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 14
+      }
+    },
+    {
+      "name": "typography/body-sm/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 400
+      }
+    },
+    {
+      "name": "typography/label-caps/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "Pretendard"
+      }
+    },
+    {
+      "name": "typography/label-caps/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 12
+      }
+    },
+    {
+      "name": "typography/label-caps/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 500
+      }
+    },
+    {
+      "name": "typography/label-caps/letterSpacing",
+      "type": "FLOAT",
+      "value": {
+        "number": 0.8
+      }
+    },
+    {
+      "name": "typography/h1/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "Public Sans"
+      }
+    },
+    {
+      "name": "typography/h1/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 48
+      }
+    },
+    {
+      "name": "typography/h1/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 700
+      }
+    }
+  ]
+}

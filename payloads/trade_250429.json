@@ -1,0 +1,252 @@
+{
+  "generated": "2026-05-06T06:56:04.790Z",
+  "collection": "trade_250429",
+  "mode": "Default",
+  "variables": [
+    {
+      "name": "color/primary",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.059,
+          "g": 0.09,
+          "b": 0.165,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/secondary",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.392,
+          "g": 0.455,
+          "b": 0.545,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/tertiary",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.231,
+          "g": 0.51,
+          "b": 0.965,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/neutral",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 1,
+          "g": 1,
+          "b": 1,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/on-tertiary",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 1,
+          "g": 1,
+          "b": 1,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/accent",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 0.976,
+          "g": 0.451,
+          "b": 0.086,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "color/promo-bg",
+      "type": "COLOR",
+      "value": {
+        "color": {
+          "r": 1,
+          "g": 0.969,
+          "b": 0.929,
+          "a": 1
+        }
+      }
+    },
+    {
+      "name": "spacing/xs",
+      "type": "FLOAT",
+      "value": {
+        "number": 4
+      }
+    },
+    {
+      "name": "spacing/sm",
+      "type": "FLOAT",
+      "value": {
+        "number": 8
+      }
+    },
+    {
+      "name": "spacing/md",
+      "type": "FLOAT",
+      "value": {
+        "number": 16
+      }
+    },
+    {
+      "name": "spacing/lg",
+      "type": "FLOAT",
+      "value": {
+        "number": 24
+      }
+    },
+    {
+      "name": "spacing/xl",
+      "type": "FLOAT",
+      "value": {
+        "number": 48
+      }
+    },
+    {
+      "name": "rounded/none",
+      "type": "FLOAT",
+      "value": {
+        "number": 0
+      }
+    },
+    {
+      "name": "rounded/sm",
+      "type": "FLOAT",
+      "value": {
+        "number": 6
+      }
+    },
+    {
+      "name": "rounded/md",
+      "type": "FLOAT",
+      "value": {
+        "number": 12
+      }
+    },
+    {
+      "name": "rounded/lg",
+      "type": "FLOAT",
+      "value": {
+        "number": 20
+      }
+    },
+    {
+      "name": "rounded/full",
+      "type": "FLOAT",
+      "value": {
+        "number": 9999
+      }
+    },
+    {
+      "name": "typography/body-md/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "Pretendard"
+      }
+    },
+    {
+      "name": "typography/body-md/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 16
+      }
+    },
+    {
+      "name": "typography/body-md/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 400
+      }
+    },
+    {
+      "name": "typography/body-sm/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "Pretendard"
+      }
+    },
+    {
+      "name": "typography/body-sm/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 14
+      }
+    },
+    {
+      "name": "typography/body-sm/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 400
+      }
+    },
+    {
+      "name": "typography/label-caps/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "Pretendard"
+      }
+    },
+    {
+      "name": "typography/label-caps/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 12
+      }
+    },
+    {
+      "name": "typography/label-caps/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 500
+      }
+    },
+    {
+      "name": "typography/label-caps/letterSpacing",
+      "type": "FLOAT",
+      "value": {
+        "number": 0.8
+      }
+    },
+    {
+      "name": "typography/h1/fontFamily",
+      "type": "STRING",
+      "value": {
+        "string": "Space Grotesk"
+      }
+    },
+    {
+      "name": "typography/h1/fontSize",
+      "type": "FLOAT",
+      "value": {
+        "number": 40
+      }
+    },
+    {
+      "name": "typography/h1/fontWeight",
+      "type": "FLOAT",
+      "value": {
+        "number": 600
+      }
+    }
+  ]
+}
