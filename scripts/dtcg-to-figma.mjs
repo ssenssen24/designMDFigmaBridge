@@ -1,6 +1,13 @@
 // scripts/dtcg-to-figma.mjs
-// Reads DTCG JSON (output of `designmd export --format dtcg`) and emits
-// a flat Figma-Variables-friendly payload that the import plugin consumes.
+// Converts the actual DTCG output of `@google/design.md export --format dtcg`
+// into a flat Figma-Variables-friendly payload.
+//
+// Real DTCG quirks this handles:
+//   • $type is declared at GROUP level and inherited by descendants
+//   • color values are objects: { colorSpace, components: [r,g,b], hex }
+//   • dimension values are objects: { value, unit }
+//   • typography composite has nested dimension objects for fontSize etc.
+//   • lineHeight may be a unitless number
 //
 // Usage:
 //   node scripts/dtcg-to-figma.mjs tokens.json figma-payload.json
@@ -10,42 +17,58 @@ import fs from "node:fs";
 const [, , inputPath = "tokens.json", outputPath = "figma-payload.json"] =
   process.argv;
 
-const REM_BASE = 16; // 1rem = 16px
+const REM_BASE = 16;
 
 const dtcg = JSON.parse(fs.readFileSync(inputPath, "utf8"));
 
 const variables = [];
 const seen = new Set();
 
-function hexToRgba(hex) {
-  const h = String(hex).replace("#", "").trim();
-  if (![3, 4, 6, 8].includes(h.length)) {
-    throw new Error(`Invalid hex color: ${hex}`);
+// ───────────────────────────── helpers ─────────────────────────────
+
+function dimensionToNumber(val) {
+  // DTCG dimension is { value: number, unit: "px" | "rem" | "em" | ... }
+  if (val && typeof val === "object" && "value" in val) {
+    const num = Number(val.value);
+    const unit = String(val.unit || "px").toLowerCase();
+    if (unit === "rem" || unit === "em") return num * REM_BASE;
+    return num; // px or other units treated as px
   }
-  // Expand 3/4-digit shorthand
-  const expanded = h.length <= 4
-    ? h.split("").map((c) => c + c).join("")
-    : h;
-  const r = parseInt(expanded.slice(0, 2), 16) / 255;
-  const g = parseInt(expanded.slice(2, 4), 16) / 255;
-  const b = parseInt(expanded.slice(4, 6), 16) / 255;
-  const a = expanded.length === 8
-    ? parseInt(expanded.slice(6, 8), 16) / 255
-    : 1;
-  return { r, g, b, a };
+  // Unitless number (e.g. lineHeight: 1.2)
+  if (typeof val === "number") return val;
+  // String fallback (rare): "16px", "1.5rem"
+  if (typeof val === "string") {
+    const m = val.trim().match(/^(-?\d*\.?\d+)\s*(px|rem|em)?$/i);
+    if (m) {
+      const num = parseFloat(m[1]);
+      const unit = (m[2] || "px").toLowerCase();
+      return unit === "rem" || unit === "em" ? num * REM_BASE : num;
+    }
+  }
+  throw new Error(`Invalid dimension: ${JSON.stringify(val)}`);
 }
 
-function dimensionToNumber(value) {
-  if (typeof value === "number") return value;
-  const s = String(value).trim();
-  const m = s.match(/^(-?\d*\.?\d+)\s*(px|rem|em)?$/i);
-  if (!m) {
-    throw new Error(`Invalid dimension: ${value}`);
+function colorToRgba(val) {
+  // DTCG 2025.10: { colorSpace: "srgb", components: [r, g, b], hex?: "#..." }
+  if (val && typeof val === "object" && Array.isArray(val.components)) {
+    const [r, g, b] = val.components;
+    const a = typeof val.alpha === "number" ? val.alpha : 1;
+    return { r, g, b, a };
   }
-  const num = parseFloat(m[1]);
-  const unit = (m[2] || "px").toLowerCase();
-  if (unit === "rem" || unit === "em") return num * REM_BASE;
-  return num;
+  // Hex string fallback
+  if (typeof val === "string" && val.startsWith("#")) {
+    const h = val.slice(1);
+    const expanded = h.length <= 4
+      ? h.split("").map((c) => c + c).join("")
+      : h;
+    return {
+      r: parseInt(expanded.slice(0, 2), 16) / 255,
+      g: parseInt(expanded.slice(2, 4), 16) / 255,
+      b: parseInt(expanded.slice(4, 6), 16) / 255,
+      a: expanded.length === 8 ? parseInt(expanded.slice(6, 8), 16) / 255 : 1,
+    };
+  }
+  throw new Error(`Invalid color: ${JSON.stringify(val)}`);
 }
 
 function isReference(value) {
@@ -55,7 +78,6 @@ function isReference(value) {
 }
 
 function refToName(ref) {
-  // {colors.primary} -> "colors/primary"
   return ref.slice(1, -1).trim().replaceAll(".", "/");
 }
 
@@ -68,15 +90,17 @@ function emit(name, type, value) {
   variables.push({ name, type, value });
 }
 
-function processColor(name, raw) {
+// ─────────────────────── per-type leaf processors ──────────────────
+
+function processColorLeaf(name, raw) {
   if (isReference(raw)) {
     emit(name, "COLOR", { alias: refToName(raw) });
   } else {
-    emit(name, "COLOR", { color: hexToRgba(raw) });
+    emit(name, "COLOR", { color: colorToRgba(raw) });
   }
 }
 
-function processDimension(name, raw) {
+function processDimensionLeaf(name, raw) {
   if (isReference(raw)) {
     emit(name, "FLOAT", { alias: refToName(raw) });
   } else {
@@ -84,7 +108,7 @@ function processDimension(name, raw) {
   }
 }
 
-function processString(name, raw) {
+function processStringLeaf(name, raw) {
   if (isReference(raw)) {
     emit(name, "STRING", { alias: refToName(raw) });
   } else {
@@ -92,86 +116,107 @@ function processString(name, raw) {
   }
 }
 
-function processFontWeight(name, raw) {
-  // Accept numeric weights (400, 700) as FLOAT, named weights as STRING.
+function processNumberLeaf(name, raw) {
   if (isReference(raw)) {
-    // Can't know target type at this stage — default to STRING alias.
-    emit(name, "STRING", { alias: refToName(raw) });
+    emit(name, "FLOAT", { alias: refToName(raw) });
     return;
   }
-  if (typeof raw === "number" || /^\d+$/.test(String(raw))) {
+  if (typeof raw === "number") {
+    emit(name, "FLOAT", { number: raw });
+  } else if (typeof raw === "string" && /^-?\d*\.?\d+$/.test(raw.trim())) {
     emit(name, "FLOAT", { number: Number(raw) });
   } else {
+    // Treat as STRING (e.g. named font weights like "bold")
     emit(name, "STRING", { string: String(raw) });
   }
 }
 
-function processTypographyComposite(basePath, value) {
-  // DTCG typography composite -> decompose to individual variables.
-  // Figma Variables can't hold a composite typography token directly.
-  const map = {
-    fontFamily: processString,
-    fontSize: processDimension,
-    fontWeight: processFontWeight,
-    lineHeight: (n, v) =>
-      typeof v === "number" || /^-?\d*\.?\d+$/.test(String(v))
-        ? processDimension(n, v) // unitless line-height becomes FLOAT
-        : processDimension(n, v),
-    letterSpacing: processDimension,
-  };
-  for (const [key, handler] of Object.entries(map)) {
-    if (value[key] !== undefined) {
-      handler(`${basePath}/${key}`, value[key]);
+// ─────────────────────── typography composite ──────────────────────
+
+function processTypography(basePath, value) {
+  // value shape: { fontFamily?, fontSize?, fontWeight?, lineHeight?, letterSpacing? }
+  // Each sub-property may be: a primitive, a {value,unit} dimension, or a reference string.
+  if (!value || typeof value !== "object") return;
+
+  if ("fontFamily" in value) {
+    processStringLeaf(`${basePath}/fontFamily`, value.fontFamily);
+  }
+  if ("fontSize" in value) {
+    processDimensionLeaf(`${basePath}/fontSize`, value.fontSize);
+  }
+  if ("fontWeight" in value) {
+    processNumberLeaf(`${basePath}/fontWeight`, value.fontWeight);
+  }
+  if ("lineHeight" in value) {
+    // lineHeight: unitless number → keep as-is; dimension → convert to px
+    const lh = value.lineHeight;
+    if (typeof lh === "number") {
+      emit(`${basePath}/lineHeight`, "FLOAT", { number: lh });
+    } else {
+      processDimensionLeaf(`${basePath}/lineHeight`, lh);
     }
+  }
+  if ("letterSpacing" in value) {
+    processDimensionLeaf(`${basePath}/letterSpacing`, value.letterSpacing);
   }
 }
 
-function walk(node, path = []) {
+// ────────────────────────── tree traversal ─────────────────────────
+
+function walk(node, path = [], inheritedType = null) {
   if (!node || typeof node !== "object") return;
 
-  // Leaf: DTCG token
-  if (node.$value !== undefined && node.$type !== undefined) {
+  // A node may declare $type for itself and all descendants.
+  const nodeType = node.$type ?? inheritedType;
+
+  // Leaf: has $value (with $type either on this node or inherited)
+  if ("$value" in node) {
     const name = path.join("/");
-    const type = node.$type;
     const val = node.$value;
+    const type = nodeType;
+
+    if (!type) {
+      console.warn(`⚠ Token "${name}" has no $type — skipped`);
+      return;
+    }
 
     switch (type) {
       case "color":
-        processColor(name, val);
+        processColorLeaf(name, val);
         break;
       case "dimension":
-      case "number":
-        processDimension(name, val);
+        processDimensionLeaf(name, val);
         break;
       case "fontWeight":
-        processFontWeight(name, val);
+      case "number":
+        processNumberLeaf(name, val);
         break;
       case "fontFamily":
       case "string":
-        processString(name, val);
+        processStringLeaf(name, val);
         break;
       case "typography":
-        if (typeof val === "object" && val !== null) {
-          processTypographyComposite(name, val);
-        }
+        processTypography(name, val);
         break;
       default:
-        // Unknown type — best-effort string fallback
-        processString(name, val);
+        // Best-effort fallback
+        processStringLeaf(name, val);
     }
     return;
   }
 
-  // Group node — recurse into children, skipping DTCG meta keys
+  // Group: recurse, propagating $type to children
   for (const key of Object.keys(node)) {
     if (key.startsWith("$")) continue;
-    walk(node[key], [...path, key]);
+    walk(node[key], [...path, key], nodeType);
   }
 }
 
+// ───────────────────────────── main ────────────────────────────────
+
 walk(dtcg);
 
-// Validate alias targets exist (warn only — plugin will skip unresolved aliases)
+// Validate alias targets exist (warn only)
 const allNames = new Set(variables.map((v) => v.name));
 for (const v of variables) {
   if (v.value.alias && !allNames.has(v.value.alias)) {
@@ -190,5 +235,6 @@ const output = {
 
 fs.writeFileSync(outputPath, JSON.stringify(output, null, 2));
 console.log(
-  `✅ ${variables.length} variables written to ${outputPath} (collection: "${output.collection}")`,
+  `✅ ${variables.length} variables written to ${outputPath} ` +
+    `(collection: "${output.collection}")`,
 );
