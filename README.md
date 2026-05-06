@@ -69,7 +69,9 @@ colors:
 
 ### 1. 저장소 push
 
-이 폴더 전체를 GitHub 저장소(public 권장)에 push합니다. push 직후 `Publish Figma Tokens` 워크플로우가 4개 컬렉션을 자동 빌드하고 `payloads/`를 commit합니다.
+이 폴더 전체를 **사내 정책에 맞는 저장소**에 push합니다. push 직후 `Publish Figma Tokens` 워크플로우가 4개 컬렉션을 자동 빌드하고 `payloads/`를 commit합니다.
+
+참고: Figma 플러그인이 `manifest.json`/payload를 내려받을 수 있어야 하므로, 최종 `manifest` URL은 **디자이너가 사용하는 Figma 환경에서 네트워크로 접근 가능**해야 합니다.
 
 ### 2. Workflow 권한
 
@@ -209,4 +211,9 @@ extends: brands/_typography  # 여러 단계 상속도 가능
 
 ## 라이선스
 
-이 브리지 코드는 자유롭게 수정·배포 가능합니다. `@google/design.md` CLI는 Apache-2.0, Figma Plugin Typings는 MIT입니다.
+이 저장소의 소스/스크립트/플러그인 및 문서(이하 “본 자산”)는 **회사 자산(프로프라이어터리)** 입니다.
+
+- **사용 범위**: 회사 내부 사용 목적에 한해 사용 가능합니다.
+- **금지 사항**: 회사의 사전 서면 승인 없이 본 자산의 전부 또는 일부를 **외부에 공개, 복제, 배포, 재라이선스, 판매**할 수 없습니다.
+
+단, 본 자산이 의존하는 제3자 소프트웨어(예: `@google/design.md`, `@figma/plugin-typings` 등)는 각 프로젝트의 라이선스(Apache-2.0, MIT 등)를 따릅니다.
