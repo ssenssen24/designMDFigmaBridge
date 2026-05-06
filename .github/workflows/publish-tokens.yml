@@ -2,7 +2,7 @@ name: Publish Figma Tokens
 
 on:
   push:
-    branches: [master, main]
+    branches: [master, v2-migration]
     paths:
       - "brands/**/DESIGN.md"
       - "promotions/**/DESIGN.md"
