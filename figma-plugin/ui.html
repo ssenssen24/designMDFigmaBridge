@@ -12,59 +12,115 @@
     --border: var(--figma-color-border, #e6e6e6);
     --accent: var(--figma-color-bg-brand, #0d99ff);
     --accent-fg: var(--figma-color-text-onbrand, #fff);
-    --warn: var(--figma-color-bg-warning-tertiary, #fef6dd);
-    --warn-fg: var(--figma-color-text-warning-tertiary, #5a3e00);
   }
   * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
   body {
-    margin: 0;
     font: 11px/1.4 -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
     color: var(--fg);
     background: var(--bg);
-    padding: 12px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    gap: 8px;
   }
-  h2 {
-    font-size: 12px; font-weight: 600;
-    margin: 0 0 4px;
-  }
-  p.hint {
-    color: var(--fg2);
-    margin: 0 0 10px;
-  }
+
+  h2 { font-size: 12px; font-weight: 600; margin: 0; }
+
   details {
-    margin-bottom: 10px;
     border: 1px solid var(--border);
     border-radius: 4px;
+    flex-shrink: 0;
   }
   details summary {
-    padding: 6px 8px;
+    padding: 5px 8px;
     cursor: pointer;
     font-weight: 500;
     list-style: none;
+    font-size: 10px;
+    color: var(--fg2);
   }
   details summary::-webkit-details-marker { display: none; }
-  details summary::before { content: "▸ "; color: var(--fg2); }
+  details summary::before { content: "▸ "; }
   details[open] summary::before { content: "▾ "; }
-  details > div { padding: 0 8px 8px; }
-
-  input[type="url"] {
-    width: 100%;
-    padding: 6px 8px;
+  details > div { padding: 0 8px 8px; display: flex; gap: 4px; }
+  details input[type="url"] {
+    flex: 1; min-width: 0;
+    padding: 4px 6px;
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 3px;
     background: var(--bg2);
     color: var(--fg);
     font: inherit;
   }
-  input[type="url"]:focus { outline: none; border-color: var(--accent); }
-
-  .row {
-    display: flex; gap: 6px; margin-top: 8px;
+  details input[type="url"]:focus { outline: none; border-color: var(--accent); }
+  details button {
+    padding: 4px 10px;
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    background: var(--accent);
+    color: var(--accent-fg);
+    font: inherit;
+    cursor: pointer;
+    flex-shrink: 0;
   }
-  button {
+
+  .toolbar {
+    display: flex; gap: 4px;
+    flex-shrink: 0;
+  }
+  .toolbar button {
+    padding: 3px 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--fg2);
+    font: inherit;
+    cursor: pointer;
+    font-size: 10px;
+  }
+
+  .list {
+    flex: 1;
+    min-height: 80px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow-y: auto;
+    background: var(--bg);
+  }
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: var(--bg2); }
+  .item input[type="checkbox"] { margin: 0; }
+  .item .name { flex: 1; font-size: 11px; }
+  .item .badge {
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 6px;
+    background: var(--bg3);
+    color: var(--fg2);
+    text-transform: uppercase;
+  }
+  .empty {
+    padding: 14px 10px;
+    text-align: center;
+    color: var(--fg2);
+    font-size: 10px;
+  }
+
+  .actions {
+    display: flex; gap: 6px;
+    flex-shrink: 0;
+  }
+  .actions button {
     flex: 1;
     padding: 6px 10px;
     border: 1px solid var(--border);
@@ -75,115 +131,50 @@
     font-weight: 500;
     cursor: pointer;
   }
-  button.primary {
+  .actions button.primary {
     background: var(--accent); color: var(--accent-fg); border-color: var(--accent);
   }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  .section-title {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--fg2);
-    margin: 12px 0 4px;
-    font-weight: 600;
-  }
-
-  .list {
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    overflow-y: auto;
-    background: var(--bg);
-    flex-shrink: 0;
-    max-height: 220px;
-  }
-  .item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    user-select: none;
-  }
-  .item:last-child { border-bottom: none; }
-  .item:hover { background: var(--bg2); }
-  .item input[type="checkbox"] { margin: 0; }
-  .item .name { flex: 1; }
-  .item .badge {
-    font-size: 9px;
-    padding: 2px 6px;
-    border-radius: 8px;
-    background: var(--bg3);
-    color: var(--fg2);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-  }
-  .item .exists {
-    font-size: 9px;
-    color: var(--fg2);
-  }
-  .empty {
-    padding: 16px;
-    text-align: center;
-    color: var(--fg2);
-  }
-
-  .toolbar {
-    display: flex; gap: 6px; margin: 6px 0;
-    font-size: 10px;
-  }
-  .toolbar button {
-    flex: 0 0 auto;
-    padding: 3px 8px;
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--fg2);
-  }
+  .actions button:disabled { opacity: 0.5; cursor: not-allowed; }
 
   #log {
-    margin-top: auto;
-    padding: 8px;
+    height: 80px;
+    padding: 6px 8px;
     background: var(--bg2);
     border-radius: 4px;
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
     font-size: 10px;
     white-space: pre-wrap;
-    height: 110px;
     overflow-y: auto;
     color: var(--fg2);
     flex-shrink: 0;
   }
-  #log .line { margin: 0; }
+  #log .line { margin: 0 0 2px; }
 </style>
 </head>
 <body>
   <h2>DESIGN.md → Figma Variables</h2>
-  <p class="hint">Pick collections from your manifest. Brands first, then promotions.</p>
 
   <details id="settings">
     <summary>Manifest URL</summary>
     <div>
       <input id="manifestUrl" type="url"
-        placeholder="https://raw.githubusercontent.com/.../master/payloads/manifest.json" />
-      <div class="row">
-        <button id="saveManifest" class="primary">Load manifest</button>
-      </div>
+        placeholder="https://raw.githubusercontent.com/.../manifest.json" />
+      <button id="saveManifest">Load</button>
     </div>
   </details>
 
   <div class="toolbar">
     <button id="selectAll">Select all</button>
     <button id="selectNone">Clear</button>
-    <button id="selectBrands">Brands only</button>
-    <button id="selectPromos">Promotions only</button>
+    <button id="selectBrands">Brands</button>
+    <button id="selectPromos">Promos</button>
   </div>
 
   <div id="list" class="list">
-    <div class="empty">No manifest loaded yet. Open "Manifest URL" above.</div>
+    <div class="empty">Loading…</div>
   </div>
 
-  <div class="row">
+  <div class="actions">
     <button id="cancel">Close</button>
     <button id="import" class="primary" disabled>Import 0</button>
   </div>
@@ -214,8 +205,7 @@
       item.className = "item";
       item.innerHTML = `
         <input type="checkbox" data-i="${i}" ${e._checked ? "checked" : ""} />
-        <span class="name">${escapeHtml(e.name)}</span>
-        ${e.existsLocally ? '<span class="exists">in file</span>' : ""}
+        <span class="name">${escapeHtml(e.name)}${e.existsLocally ? " ✓" : ""}</span>
         <span class="badge">${e.kind}</span>
       `;
       list.appendChild(item);
@@ -248,14 +238,16 @@
     render();
   }
 
-  // Manifest load
   $("saveManifest").addEventListener("click", () => {
     const url = $("manifestUrl").value.trim();
     if (!url) return append("⚠ Please enter a URL.");
     parent.postMessage({ pluginMessage: { type: "set-manifest", url } }, "*");
   });
 
-  // Toolbar
+  $("manifestUrl").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") $("saveManifest").click();
+  });
+
   $("selectAll").addEventListener("click", () => applyFilter(() => true));
   $("selectNone").addEventListener("click", () => applyFilter(() => false));
   $("selectBrands").addEventListener("click", () =>
@@ -263,12 +255,10 @@
   $("selectPromos").addEventListener("click", () =>
     applyFilter((e) => e.kind === "promotion"));
 
-  // Import
   $("import").addEventListener("click", () => {
     const selected = entries.filter((e) => e._checked);
     if (!selected.length) return;
     $("import").disabled = true;
-    $("log").innerHTML = "";
     parent.postMessage(
       { pluginMessage: { type: "import", entries: selected } },
       "*"
@@ -284,11 +274,12 @@
     if (!msg) return;
     if (msg.type === "init") {
       $("manifestUrl").value = msg.manifestUrl || "";
-      if (!msg.manifestUrl) $("settings").open = true;
+    } else if (msg.type === "open-settings") {
+      $("settings").open = true;
     } else if (msg.type === "manifest-loaded") {
       entries = msg.entries.map((e) => ({ ...e, _checked: false }));
-      append(`📋 Loaded ${entries.length} collection(s).`);
       render();
+      $("settings").open = false; // auto-collapse on success
     } else if (msg.type === "log") {
       append(msg.message);
     } else if (msg.type === "done") {

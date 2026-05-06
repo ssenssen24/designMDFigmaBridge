@@ -1,9 +1,11 @@
-// figma-plugin/code.ts
+// figma-plugin/code.ts (v2.1)
 //
-// DESIGN.md Importer v2 — fetches a manifest.json listing available
-// collections, lets the user pick one or more via checkboxes, and imports
-// each as an independent Figma Variables Collection. Re-running on the
-// same payload updates values without creating duplicates.
+// DESIGN.md Importer — manifest-based multi-select import.
+// Fixes from v2.0:
+//   - Use figma.notify() for errors (always visible, even if log scrolls off)
+//   - Fix msg.url vs msg.manifestUrl mismatch
+//   - Compact UI that fits in default plugin window
+//   - Auto-collapse settings after successful load
 
 interface PayloadValue {
   color?: { r: number; g: number; b: number; a: number };
@@ -33,12 +35,23 @@ interface ManifestEntry {
 
 const STORAGE_MANIFEST_URL = "design-md.manifest-url";
 
-figma.showUI(__html__, { width: 420, height: 540, themeColors: true });
+figma.showUI(__html__, { width: 400, height: 500, themeColors: true });
 
 (async () => {
   const url = (await figma.clientStorage.getAsync(STORAGE_MANIFEST_URL)) || "";
   figma.ui.postMessage({ type: "init", manifestUrl: url });
-  if (url) await loadManifest(url);
+  if (url) {
+    try {
+      await loadManifest(url);
+    } catch (err) {
+      const m = err instanceof Error ? err.message : String(err);
+      figma.notify(`❌ Auto-load failed: ${m}`, { error: true, timeout: 8000 });
+      figma.ui.postMessage({ type: "log", message: `❌ ${m}` });
+      figma.ui.postMessage({ type: "open-settings" });
+    }
+  } else {
+    figma.ui.postMessage({ type: "open-settings" });
+  }
 })();
 
 figma.ui.onmessage = async (msg) => {
@@ -54,25 +67,47 @@ figma.ui.onmessage = async (msg) => {
   } catch (err) {
     const m = err instanceof Error ? err.message : String(err);
     figma.ui.postMessage({ type: "log", message: `❌ ${m}` });
-    figma.notify(`❌ ${m}`, { error: true });
+    figma.notify(`❌ ${m}`, { error: true, timeout: 8000 });
     figma.ui.postMessage({ type: "done" });
   }
 };
 
 async function loadManifest(url: string) {
   figma.ui.postMessage({ type: "log", message: `📥 Loading manifest…` });
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Manifest HTTP ${res.status}`);
-  const entries = (await res.json()) as ManifestEntry[];
-  if (!Array.isArray(entries)) throw new Error("Invalid manifest format");
 
-  // Sort: brands first, then promotions by name.
+  let res: { ok: boolean; status: number; json(): Promise<unknown> };
+  try {
+    res = await fetch(url, { cache: "no-store" });
+  } catch (err) {
+    const m = err instanceof Error ? err.message : String(err);
+    throw new Error(`Network error: ${m}. Check the URL and network access.`);
+  }
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status} from manifest URL`);
+  }
+
+  let entries: ManifestEntry[];
+  try {
+    entries = (await res.json()) as ManifestEntry[];
+  } catch {
+    throw new Error("Manifest is not valid JSON");
+  }
+
+  if (!Array.isArray(entries)) {
+    throw new Error("Manifest must be a JSON array");
+  }
+
+  if (entries.length === 0) {
+    figma.notify("⚠ Manifest is empty (0 collections)", { timeout: 5000 });
+  }
+
+  // Sort: brands first, then promotions, both by name.
   entries.sort((a, b) => {
     if (a.kind !== b.kind) return a.kind === "brand" ? -1 : 1;
     return a.name.localeCompare(b.name);
   });
 
-  // Annotate which collections already exist locally
   const existingNames = new Set(
     figma.variables.getLocalVariableCollections().map((c) => c.name),
   );
@@ -82,6 +117,11 @@ async function loadManifest(url: string) {
   }));
 
   figma.ui.postMessage({ type: "manifest-loaded", entries: annotated });
+  figma.ui.postMessage({
+    type: "log",
+    message: `📋 Loaded ${entries.length} collection(s).`,
+  });
+  figma.notify(`📋 ${entries.length} collection(s) ready`, { timeout: 3000 });
 }
 
 async function importMany(entries: ManifestEntry[]) {
@@ -92,34 +132,40 @@ async function importMany(entries: ManifestEntry[]) {
   for (const entry of entries) {
     figma.ui.postMessage({
       type: "log",
-      message: `\n📦 ${entry.name}…`,
+      message: `📦 ${entry.name}…`,
     });
-    const res = await fetch(entry.url, { cache: "no-store" });
-    if (!res.ok) {
+
+    let payload: Payload;
+    try {
+      const res = await fetch(entry.url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      payload = (await res.json()) as Payload;
+    } catch (err) {
+      const m = err instanceof Error ? err.message : String(err);
       figma.ui.postMessage({
         type: "log",
-        message: `  ❌ HTTP ${res.status} — skipped`,
+        message: `  ❌ ${entry.name}: ${m}`,
       });
       continue;
     }
-    const payload = (await res.json()) as Payload;
+
     const result = importPayload(payload);
     totalCreated += result.created;
     totalUpdated += result.updated;
     totalSkipped += result.skipped;
     figma.ui.postMessage({
       type: "log",
-      message: `  ✅ +${result.created} new, ~${result.updated} updated, ${result.skipped} skipped`,
+      message: `  ✅ +${result.created}, ~${result.updated}, skip ${result.skipped}`,
     });
   }
 
-  figma.ui.postMessage({
-    type: "log",
-    message:
-      `\n🎉 Done. Total: +${totalCreated} new, ~${totalUpdated} updated, ` +
-      `${totalSkipped} skipped across ${entries.length} collection(s).`,
+  const summary =
+    `Done. +${totalCreated} new, ~${totalUpdated} updated, ` +
+    `${totalSkipped} skipped across ${entries.length} collection(s).`;
+  figma.ui.postMessage({ type: "log", message: `🎉 ${summary}` });
+  figma.notify(`✅ Imported ${totalCreated + totalUpdated} variables`, {
+    timeout: 4000,
   });
-  figma.notify(`✅ Imported ${totalCreated + totalUpdated} variables`);
   figma.ui.postMessage({ type: "done" });
 }
 
@@ -135,35 +181,26 @@ function importPayload(payload: Payload) {
     collection.renameMode(modeId, payload.mode);
   }
 
-  // Index existing vars by name within this collection.
   const allVars = figma.variables.getLocalVariables();
   const byName = new Map<string, Variable>();
   for (const v of allVars) {
-    if (v.variableCollectionId === collection.id) {
-      byName.set(v.name, v);
-    }
+    if (v.variableCollectionId === collection.id) byName.set(v.name, v);
   }
 
   let created = 0;
   let updated = 0;
   let skipped = 0;
 
-  // Pass 1: ensure variables exist with correct type.
   for (const def of payload.variables) {
     const existing = byName.get(def.name);
     if (!existing) {
-      const v = figma.variables.createVariable(
-        def.name,
-        collection,
-        def.type,
-      );
+      const v = figma.variables.createVariable(def.name, collection, def.type);
       byName.set(def.name, v);
       created++;
     } else if (existing.resolvedType !== def.type) {
       figma.ui.postMessage({
         type: "log",
-        message:
-          `  ⚠ Skipped "${def.name}": type ${existing.resolvedType} ≠ ${def.type}`,
+        message: `  ⚠ "${def.name}": ${existing.resolvedType} ≠ ${def.type}`,
       });
       skipped++;
     } else {
@@ -171,7 +208,6 @@ function importPayload(payload: Payload) {
     }
   }
 
-  // Pass 2: set values, resolving aliases.
   for (const def of payload.variables) {
     const v = byName.get(def.name);
     if (!v || v.resolvedType !== def.type) continue;
@@ -179,13 +215,7 @@ function importPayload(payload: Payload) {
     try {
       if (def.value.alias !== undefined) {
         const target = byName.get(def.value.alias);
-        if (!target) {
-          figma.ui.postMessage({
-            type: "log",
-            message: `  ⚠ Alias missing: ${def.name} → ${def.value.alias}`,
-          });
-          continue;
-        }
+        if (!target) continue;
         if (target.resolvedType !== v.resolvedType) continue;
         v.setValueForMode(modeId, figma.variables.createVariableAlias(target));
       } else if (def.value.color !== undefined) {
@@ -195,12 +225,8 @@ function importPayload(payload: Payload) {
       } else if (def.value.string !== undefined) {
         v.setValueForMode(modeId, def.value.string);
       }
-    } catch (err) {
-      const m = err instanceof Error ? err.message : String(err);
-      figma.ui.postMessage({
-        type: "log",
-        message: `  ⚠ Failed "${def.name}": ${m}`,
-      });
+    } catch {
+      // Silent skip — non-fatal per-variable errors
     }
   }
 
